@@ -7,6 +7,7 @@
 #define MAX_BACKLOG 5
 #define DEFAULT_PORT "50000"
 #define BUF_LINE_SIZE 1024
+#define LOG_FILE_NAME "/usr/local/bin/scd_education/sugawara/log/%s_%04d_request.log"
 #define HTTP_HEADER "HTTP/1.1 %s\nContent-type: text/html\n\n"
 #define DOCUMENT_ROOT "/usr/local/bin/scd_education/sugawara/www"
 
@@ -19,10 +20,10 @@ int main (int argc, char *argv[]) {
 	for (;;) {
 		struct sockaddr_storage addr;
 		socklen_t addrlen = sizeof addr;
-		int accsock, test;
+		int accsock, count=1;
 		char buf[BUF_LINE_SIZE], datestr[20], logfilename[256], method[100], uri[BUF_LINE_SIZE], protocol[100], hresh[100];
 		char request_path[BUF_LINE_SIZE] = DOCUMENT_ROOT;
-		FILE *logsockf, *rsockf, *wsockf, *logf, *outf;
+		FILE *rsockf, *wsockf, *logf, *outf;
 		time_t timer;
 		struct tm *date;
 
@@ -31,45 +32,38 @@ int main (int argc, char *argv[]) {
 			fprintf (stderr, "accept failed\n");
 			continue;
 		}
-/*
-		// HTTPリクエストログ
+
+		// HTTPリクエスト
 		timer = time (NULL);
 		date = localtime (&timer);
 		strftime (datestr, 20, "%Y%m%d%H%M%S", date);
 		rsockf = fdopen (accsock, "r");
-		setvbuf (rsockf, NULL, _IONBF, 0);
-		sprintf (logfilename, "./log/%s_%04d_request.log", datestr, cnt);
+		sprintf (logfilename, LOG_FILE_NAME, datestr, cnt);
 		logf = fopen (logfilename, "w");
 		while (fgets (buf, sizeof buf, rsockf)) {
+			if (buf[0] == '\r') {
+				break;
+			}	
 			fputs (buf, logf);
+			if (count == 1) {
+              			sscanf (buf, "%s %s %s", method, uri, protocol);
+                		if (strcmp (uri, "/") == 0) {
+                        		strcat (request_path, "/index.html");
+                		} else {
+                        		strcat (request_path, uri);
+                		}
+			}
+			count++;
 		}
-
-		fprintf(stdout, "after while\n");
 		fclose (logf);
-		fclose (rsockf);
-*/
-logsockf = fdopen (accsock, "r");
-setvbuf (logsockf, NULL, _IONBF, 0);
-for (test=1;test<=5;test++){
-	fgets (buf, sizeof buf, logsockf);
-        fputs (buf, stdout);
-      }
-		rsockf = fdopen (accsock, "r");
-		fgets (buf, sizeof buf, rsockf);
-		sscanf (buf, "%s %s %s", method, uri, protocol);
-fprintf(stdout,"%s\n", buf);
-		if (strcmp (uri, "/") == 0) {
-			strcat (request_path, "/index.html");
-		} else {
-			strcat (request_path, uri);
-		}
-fprintf(stdout, "%s\n", request_path);
+
 		// HTTPレスポンス
                 wsockf = fdopen (accsock, "w");
 		outf = fopen (request_path, "r");
 		if (outf == NULL) {
 			sprintf (hresh, HTTP_HEADER, "404 Not Found");
 			fputs (hresh, wsockf);
+			fputs("404 Not Found\n", wsockf);
 		} else {
 			sprintf (hresh, HTTP_HEADER, "200 Ok");
 			fputs (hresh, wsockf);
@@ -80,7 +74,6 @@ fprintf(stdout, "%s\n", request_path);
 		}
 		fclose (wsockf);
                 fclose (rsockf);
-		fclose (logsockf);
 		cnt++;
 	}
 }
