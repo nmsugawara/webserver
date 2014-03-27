@@ -28,7 +28,7 @@ int main (int argc, char *argv[]) {
 
 		sockf = fdopen (accsock, "r");
 		setvbuf (sockf, NULL, _IONBF, 0);
-		sprintf (filename, "./log/%d_%04d_request.log", accsock, fcnt);
+		sprintf (filename, "../log/%d_%04d_request.log", accsock, fcnt);
 		fp = fopen (filename, "w");
 		if (!fp) {
 			fprintf (stdout, "log file not exist error\n");

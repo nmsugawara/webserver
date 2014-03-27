@@ -6,9 +6,9 @@
 #include <time.h>
 #define MAX_BACKLOG 5
 #define DEFAULT_PORT "50000"
-#define BUF_LINE_SIZE 1024
+#define BUF_LINE_SIZE 2048
 #define LOG_FILE_NAME "/usr/local/bin/scd_education/sugawara/log/%s_%04d_request.log"
-#define HTTP_HEADER "HTTP/1.1 %i %s\nContent-type: text/html\n charset=UTF-8\n\n"
+#define HTTP_HEADER "HTTP/1.1 %i %s\nContent-type: text/html\n\n"
 #define DOCUMENT_ROOT "/usr/local/bin/scd_education/sugawara/www"
 #define STATUS_CODE_NUMBER 6
 
@@ -36,7 +36,7 @@ int main (int argc, char *argv[]) {
 		struct sockaddr_storage addr;
 
 		socklen_t addrlen = sizeof addr;
-		int accsock, code, content_length=0, count=1, tmp_length;
+		int accsock, code, content_length=0, count=1;
 		char buf[BUF_LINE_SIZE], datestr[32], logfilename[256];
 		char method[16], uri[BUF_LINE_SIZE], protocol[16], hresh[100], msg[256];
 		char request_path[BUF_LINE_SIZE] = DOCUMENT_ROOT;
@@ -57,35 +57,12 @@ int main (int argc, char *argv[]) {
 		rsockf = fdopen (accsock, "r");
 		sprintf (logfilename, LOG_FILE_NAME, datestr, cnt);
 		logf = fopen (logfilename, "w");
-		if (logf == NULL) {
-			// 内部エラー?
-			code = 500;
-			wsockf = fdopen (accsock, "w");
-			// header
-			sprintf (hresh, HTTP_HEADER, code, get_http_status_msg(slist, code));
-			fputs (hresh, wsockf);
-                        // body
-                        sprintf (msg, "%i %s\n", code, get_http_status_msg(slist, code));
-                        fputs(msg, wsockf);
-			fclose (wsockf);
-			fclose (rsockf);
-			continue;
-		}
 		while (fgets (buf, sizeof buf, rsockf)) {
 			if (buf[0] == '\r') {
 				// POSTの場合BODYも読み込み
 				if (strcmp (method, "POST") == 0) {
-					// bufのサイズ毎に分割して出力
-					tmp_length = content_length;
-					while (tmp_length > 0) {
-						if ( tmp_length < sizeof buf) {
-							fgets (buf, tmp_length+1, rsockf);
-						} else {
-							fgets (buf, sizeof buf, rsockf);
-						}
-						fputs (buf, logf);
-						tmp_length = tmp_length - sizeof buf+1;
-					}
+					fgets (buf, content_length+1, rsockf);
+					fputs (buf, logf);
 				}
 				break;
 			}
@@ -113,18 +90,14 @@ int main (int argc, char *argv[]) {
 		outf = fopen (request_path, "r");
 		if (outf == NULL) {
 			code = 404;
-			// header
 			sprintf (hresh, HTTP_HEADER, code, get_http_status_msg(slist, code));
 			fputs (hresh, wsockf);
-			// body
 			sprintf (msg, "%i %s\n", code, get_http_status_msg(slist, code));
 			fputs(msg, wsockf);
 		} else {
 			code = 200;
-			// header
 			sprintf (hresh, HTTP_HEADER, code, get_http_status_msg(slist, code));
 			fputs (hresh, wsockf);
-			// body
 	                while (fgets (buf, sizeof buf, outf)) {
         	                fputs (buf, wsockf);
                 	}
