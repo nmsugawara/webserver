@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style type="text/css">
+#form                  { width: 100%; text-align:center;}  /* テーブルの横幅をピクセルで指定 */
+#form table            {margin-left: auto; margin-right: auto;}  /* テーブルの横幅をピクセルで指定 */
+#form td, #form th { border: 1px solid #aaa; }  /* テーブルの枠線のスタイルを指定 */
+#form th               { background-color: #eee; }  /* 見出しセルの背景色を指定 */
+#form span.example     { color: #36c; }             /* 例テキストの文字色を指定 */
+#form th               { background-color: #eee; }  /* 見出しセルの背景色を指定 */
+#title               { text-align:center; font-size: 20px; color: #8B008B; }  /* 見出しセルの背景色を指定 */
+</style>
+<title>Welcome!</title>
+</head>
+<body>
+<div id="title">
+<p>Welcome!</p>
+</div>
+<div id="form">
+<form action="http://54.199.190.207:50000/logout.html" method="post">
+<p>
+<input type="submit" value="logout" />
+</p>
+</form>
+</div>
+<div id="contents">
+<ul>
+	<li><a href="./index.html">cookie有の際に閲覧可能ページ</a></li>
+	<li><a href="./index2.html">パーミッション不備</a></li>
+	<li><a href="./hogehoge.php">PHPページ</a></li>
+	<li><a href="./hogehoge.html">存在しないページ</a></li>
+</ul>
+</div>
+</body>
+</html>
